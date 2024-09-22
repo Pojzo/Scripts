@@ -1,0 +1,28 @@
+#!/bin/bash
+
+while getopts "e:" flag; do
+    case "${flag}" in
+        e) env=${OPTARG};;
+    esac
+done
+
+cwd=$(pwd)
+script="cd $cwd"
+
+if [ -z "$env" ]
+then
+    active_environment=$(
+    conda info | grep "active environment" | awk -F ':' '
+    function ltrim(s) { sub(/^[ \t\r\n]+/, "", s); return s }
+    function rtrim(s) { sub(/[ \t\r\n]+$/, "", s); return s }
+    function trim(s)  { return rtrim(ltrim(s)); }
+    { print trim($2) }'
+    )
+    echo "Active environment: $active_environment"
+    script="$script; conda activate $active_environment"
+else
+    script="$script; conda activate $env"
+    echo "$env"
+fi
+
+osascript -e "tell application \"Terminal\" to do script \"$script\""
